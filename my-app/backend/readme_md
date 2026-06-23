@@ -1,0 +1,27 @@
+リアルタイム災害データ収集アプリ - バックエンド初期テンプレート
+
+Express + PostgreSQL の構成で、センサーデータの登録・取得を行うための最小構成プロジェクトです。
+動作確認用のHTMLフロントエンドも同梱されています。
+
+## ディレクトリ構成
+- `server.js` : Expressサーバー本体（APIエンドポイント実装）
+- `index.html` : 動作確認用の簡易テストフロントエンド画面
+- `init.sql` : PostgreSQL用のテーブル作成クエリ
+- `package.json` : 依存パッケージ管理ファイル
+- `.env.example` : 環境変数の設定サンプル
+
+## 使い方・起動手順
+
+### 1. データベースの準備 (PostgreSQL)
+PostgreSQLを起動し、任意のデータベース（例: `disaster_db`）を作成した後、`init.sql` 内のSQLクエリを実行して `sensor_data` テーブルを作成してください。
+
+### 2. 環境変数の設定
+`.env.example` ファイルをコピーして `.env` という名前に変更します。
+ファイルを開き、ご自身の PostgreSQL の接続情報（ユーザー名、パスワード、DB名など）に合わせて `DATABASE_URL` を修正してください。
+
+### 3. パッケージのインストール
+ターミナルを開き、本ディレクトリで以下のコマンドを実行します。
+Zip file created successfully: disaster-app-backend.zip
+
+```bash
+npm install

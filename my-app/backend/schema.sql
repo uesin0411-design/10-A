@@ -1,0 +1,15 @@
+CREATE TABLE IF NOT EXISTS sensor_data (
+    id SERIAL PRIMARY KEY,
+    device_id VARCHAR(50) NOT NULL,
+    location VARCHAR(100) NOT NULL,
+    water_level NUMERIC(5,2) NOT NULL,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
+
+-- 危険度データの保存用
+CREATE TABLE IF NOT EXISTS risk_levels (
+    id SERIAL PRIMARY KEY,
+    source VARCHAR(100) NOT NULL,
+    type VARCHAR(100) NOT NULL,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);

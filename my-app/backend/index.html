@@ -1,0 +1,160 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>災害データ収集・可視化 API テスト画面</title>
+    <style>
+        body { font-family: 'Helvetica Neue', Arial, sans-serif; max-width: 800px; margin: 40px auto; padding: 0 20px; background-color: #f5f7fa; color: #333; }
+        h1 { color: #2c3e50; border-bottom: 2px solid #34495e; padding-bottom: 10px; }
+        .card { background: white; padding: 24px; border-radius: 8px; box-shadow: 0 4px 6px rgba(0,0,0,0.05); margin-bottom: 24px; }
+        h2 { margin-top: 0; color: #34495e; font-size: 1.2rem; border-left: 4px solid #3498db; padding-left: 10px; }
+        .card.risk h2 { border-left: 4px solid #e74c3c; }
+        .form-group { margin-bottom: 15px; }
+        label { display: block; margin-bottom: 5px; font-weight: bold; font-size: 0.9rem; }
+        input { width: 100%; padding: 10px; border: 1px solid #ccc; border-radius: 4px; box-sizing: border-box; font-size: 1rem; }
+        button { background-color: #3498db; color: white; border: none; padding: 12px 20px; border-radius: 4px; cursor: pointer; font-size: 1rem; font-weight: bold; transition: background 0.2s; margin-right: 10px; margin-bottom: 10px; }
+        button:hover { background-color: #2980b9; }
+        .btn-get { background-color: #2ecc71; }
+        .btn-get:hover { background-color: #27ae60; }
+        .btn-risk-post { background-color: #e74c3c; }
+        .btn-risk-post:hover { background-color: #c0392b; }
+        pre { background-color: #2d3748; color: #f7fafc; padding: 15px; border-radius: 6px; overflow-x: auto; font-family: 'Courier New', Courier, monospace; max-height: 400px; }
+        .status-badge { display: inline-block; padding: 4px 8px; border-radius: 4px; font-size: 0.85rem; font-weight: bold; background: #e2e8f0; margin-bottom: 10px; }
+        .grid-container { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; }
+        @media (max-width: 600px) { .grid-container { grid-template-columns: 1fr; } }
+    </style>
+</head>
+<body>
+
+    <h1>災害データ収集・可視化 API テスト画面</h1>
+    <p>バックエンド（Express + PostgreSQL）が正しく通信できているかを確認するための画面です。</p>
+
+    <div class="grid-container">
+        <div>
+            <div class="card">
+                <h2>1. センサー送信 (POST /api/sensors)</h2>
+                <div class="form-group">
+                    <label for="deviceId">センサーID (id)</label>
+                    <input type="text" id="deviceId" value="1">
+                </div>
+                <div class="form-group">
+                    <label for="location">設置場所 (location)</label>
+                    <input type="text" id="location" value="nagoya">
+                </div>
+                <div class="form-group">
+                    <label for="waterLevel">水位 (water_level)</label>
+                    <input type="number" id="waterLevel" step="0.1" value="3.5">
+                </div>
+                <button onclick="sendSensorData()">送信（POST）</button>
+            </div>
+
+            <div class="card">
+                <h2>2. センサー取得 (GET /api/sensors)</h2>
+                <button class="btn-get" onclick="getSensorData()">一覧を取得（GET）</button>
+            </div>
+        </div>
+
+        <div>
+            <div class="card risk">
+                <h2>3. 危険度送信 (POST /api/risk-level)</h2>
+                <div class="form-group">
+                    <label for="source">情報源 (source)</label>
+                    <input type="text" id="source" value="気象庁API">
+                </div>
+                <div class="form-group">
+                    <label for="type">危険度種類 (type)</label>
+                    <input type="text" id="type" value="大雨警報">
+                </div>
+                <button class="btn-risk-post" onclick="sendRiskLevelData()">送信（POST）</button>
+            </div>
+
+            <div class="card risk">
+                <h2>4. 危険度取得 (GET /api/risk-level)</h2>
+                <button class="btn-get" onclick="getRiskLevelData()">一覧を取得（GET）</button>
+            </div>
+        </div>
+    </div>
+
+    <div class="card">
+        <h2>API レスポンス確認用ログ</h2>
+        <div id="statusBadge" class="status-badge">ステータス: 待機中</div>
+        <pre id="output">// ここにAPIから返ってきたJSONが表示されます</pre>
+    </div>
+
+    <script>
+        // ここにはフロントエンド（ブラウザ）用の処理だけを書きます
+        const API_SENSORS = '/api/sensors';
+        const API_RISK_LEVEL = '/api/risk-level';
+
+        function updateLog(statusText, jsonData) {
+            document.getElementById('statusBadge').textContent = `ステータス: ${statusText}`;
+            document.getElementById('output').textContent = JSON.stringify(jsonData, null, 2);
+        }
+
+        // ==========================================
+        // センサーAPI (sensors)
+        // ==========================================
+        async function sendSensorData() {
+            const id = document.getElementById('deviceId').value;
+            const location = document.getElementById('location').value;
+            const water_level = parseFloat(document.getElementById('waterLevel').value);
+            const payload = { id, location, water_level };
+
+            try {
+                const response = await fetch(API_SENSORS, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(payload)
+                });
+                const data = await response.json();
+                updateLog(`Sensors POST 成功 (${response.status})`, data);
+            } catch (error) {
+                updateLog("Sensors POST エラー", { message: error.message });
+            }
+        }
+
+        async function getSensorData() {
+            try {
+                const response = await fetch(API_SENSORS);
+                const data = await response.json();
+                updateLog(`Sensors GET 成功 (${response.status})`, data);
+            } catch (error) {
+                updateLog("Sensors GET エラー", { message: error.message });
+            }
+        }
+
+        // ==========================================
+        // 危険度API (risk_levels)
+        // ==========================================
+        async function sendRiskLevelData() {
+            const source = document.getElementById('source').value;
+            const type = document.getElementById('type').value;
+            
+            const payload = { source, type };
+
+            try {
+                const response = await fetch(API_RISK_LEVEL, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(payload)
+                });
+                const data = await response.json();
+                updateLog(`Risk Level POST 成功 (${response.status})`, data);
+            } catch (error) {
+                updateLog("Risk Level POST エラー", { message: error.message });
+            }
+        }
+
+        async function getRiskLevelData() {
+            try {
+                const response = await fetch(API_RISK_LEVEL);
+                const data = await response.json();
+                updateLog(`Risk Level GET 成功 (${response.status})`, data);
+            } catch (error) {
+                updateLog("Risk Level GET エラー", { message: error.message });
+            }
+        }
+    </script>
+</body>
+</html>
